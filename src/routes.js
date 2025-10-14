@@ -22,6 +22,11 @@ import Register from "views/examples/Register.js";
 import Login from "views/examples/Login.js";
 import Tables from "views/examples/Tables.js";
 import Icons from "views/examples/Icons.js";
+import Users from "views/users";
+import Boards_Classes from "views/boards";
+import BoardsClasses from "views/boards";
+import Books from "views/books";
+import UserProfile from "views/profile";
 
 var routes = [
   {
@@ -43,21 +48,21 @@ var routes = [
     path: "/users",
     name: "Users",
     icon: "ni ni-planet text-blue",
-    component: <Icons />,
+    component: <Users />,
     layout: "/admin",
   },
   {
-    path: "/boards_classescm",
+    path: "/boards_classes",
     name: "Boards & Classes",
     icon: "ni ni-planet text-blue",
-    component: <Icons />,
+    component: <BoardsClasses />,
     layout: "/admin",
   },
   {
-    path: "/boards",
+    path: "/books",
     name: "Books",
     icon: "ni ni-planet text-blue",
-    component: <Icons />,
+    component: <Books />,
     layout: "/admin",
   },
   {
@@ -72,7 +77,7 @@ var routes = [
     path: "/user-profile",
     name: "User Profile",
     icon: "ni ni-single-02 text-yellow",
-    component: <Profile />,
+    component: <UserProfile />,
     layout: "/admin",
     showInSidebar:false
   },
