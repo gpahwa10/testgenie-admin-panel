@@ -15,7 +15,7 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 // reactstrap components
 import {
   DropdownMenu,
@@ -35,6 +35,18 @@ import {
 } from "reactstrap";
 
 const AdminNavbar = (props) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear any authentication data (localStorage, sessionStorage, etc.)
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+    
+    // Navigate to login page
+    navigate('/auth/login');
+  };
+
   return (
     <>
       <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main">
@@ -95,7 +107,7 @@ const AdminNavbar = (props) => {
                   <span>Support</span>
                 </DropdownItem> */}
                 <DropdownItem divider />
-                <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
+                <DropdownItem onClick={handleLogout}>
                   <i className="ni ni-user-run" />
                   <span>Logout</span>
                 </DropdownItem>
