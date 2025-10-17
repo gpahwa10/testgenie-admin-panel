@@ -38,12 +38,7 @@ const AdminNavbar = (props) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear any authentication data (localStorage, sessionStorage, etc.)
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.clear();
-    
-    // Navigate to login page
+    // Simple logout - just navigate to login page
     navigate('/auth/login');
   };
 
@@ -94,18 +89,6 @@ const AdminNavbar = (props) => {
                   <i className="ni ni-single-02" />
                   <span>My profile</span>
                 </DropdownItem>
-                {/* <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-settings-gear-65" />
-                  <span>Settings</span>
-                </DropdownItem> */}
-                {/* <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-calendar-grid-58" />
-                  <span>Activity</span>
-                </DropdownItem> */}
-                {/* <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-support-16" />
-                  <span>Support</span>
-                </DropdownItem> */}
                 <DropdownItem divider />
                 <DropdownItem onClick={handleLogout}>
                   <i className="ni ni-user-run" />

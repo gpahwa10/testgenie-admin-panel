@@ -1,7 +1,15 @@
-import React from 'react'
+import React, {useState} from 'react'
 import { Media, UncontrolledTooltip, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle, Pagination, PaginationItem, PaginationLink, Progress, Table, Container, Row } from 'reactstrap'
 import Header from 'components/Headers/Header'
+import AddBoardsModal from 'components/modals/AddBoardsModal'
 const BoardsClasses = () => {
+  const [isModalOpen,setIsModalOpen] = useState(false);
+
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  }
+
+
     return (
         <>
         <div className="header bg-gradient-info pb-8 pt-5 pt-md-8"></div>
@@ -14,8 +22,7 @@ const BoardsClasses = () => {
               <CardHeader className="border-0 d-flex align-items-center justify-content-between">
                   <h3 className="mb-0">Boards And Classes</h3>
                   <div>
-                  <button className="btn btn-primary">Add Board</button>
-                  <button className="btn btn-primary">Add Class</button>
+                  <button className="btn btn-primary" onClick={toggleModal}>Add Board</button>
                   </div>
                 </CardHeader>
                 <Table className="align-items-center table-flush" responsive>
@@ -381,6 +388,9 @@ const BoardsClasses = () => {
             </div>
           </Row>
         </Container>
+
+<AddBoardsModal isOpen={isModalOpen} toggle={toggleModal} />
+
       </>
       )
 }

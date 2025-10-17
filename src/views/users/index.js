@@ -1,7 +1,85 @@
-import React from 'react'
-import { Media, UncontrolledTooltip, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle, Pagination, PaginationItem, PaginationLink, Progress, Table, Container, Row, Button } from 'reactstrap'
-import Header from 'components/Headers/Header'
+import React, { useState } from 'react'
+import { Media, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle, Pagination, PaginationItem, PaginationLink, Table, Container, Row, Button } from 'reactstrap'
+import AddUserModal from 'components/modals/AddUserModal'
+
 const Users = () => {
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      name: 'John Smith',
+      email: 'john.smith@email.com',
+      phoneNumber: '+1 (555) 123-4567',
+      schoolName: 'Harvard University',
+      credits: 150,
+      uid: 'USR001',
+      avatar: require("../../assets/img/theme/team-1-800x800.jpg")
+    },
+    {
+      id: 2,
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@email.com',
+      phoneNumber: '+1 (555) 234-5678',
+      schoolName: 'Stanford University',
+      credits: 75,
+      uid: 'USR002',
+      avatar: require("../../assets/img/theme/team-2-800x800.jpg")
+    },
+    {
+      id: 3,
+      name: 'Michael Brown',
+      email: 'michael.brown@email.com',
+      phoneNumber: '+1 (555) 345-6789',
+      schoolName: 'MIT',
+      credits: 200,
+      uid: 'USR003',
+      avatar: require("../../assets/img/theme/team-3-800x800.jpg")
+    },
+    {
+      id: 4,
+      name: 'Emily Davis',
+      email: 'emily.davis@email.com',
+      phoneNumber: '+1 (555) 456-7890',
+      schoolName: 'Yale University',
+      credits: 25,
+      uid: 'USR004',
+      avatar: require("../../assets/img/theme/team-4-800x800.jpg")
+    },
+    {
+      id: 5,
+      name: 'David Wilson',
+      email: 'david.wilson@email.com',
+      phoneNumber: '+1 (555) 567-8901',
+      schoolName: 'Princeton University',
+      credits: 300,
+      uid: 'USR005',
+      avatar: require("../../assets/img/theme/team-1-800x800.jpg")
+    }
+  ]);
+
+  const toggleAddUserModal = () => {
+    setIsAddUserModalOpen(!isAddUserModalOpen);
+  };
+
+  const handleAddUser = (newUserData) => {
+    const newUser = {
+      id: users.length + 1,
+      ...newUserData,
+      avatar: require("../../assets/img/theme/team-1-800x800.jpg") // Default avatar
+    };
+    
+    setUsers(prevUsers => [...prevUsers, newUser]);
+    
+    // Here you would typically make an API call to save the user
+    console.log('New user added:', newUser);
+  };
+
+  const getCreditsBadgeColor = (credits) => {
+    if (credits >= 200) return 'success';
+    if (credits >= 100) return 'info';
+    if (credits >= 50) return 'warning';
+    return 'danger';
+  };
   return (
     <>
     <div className="header bg-gradient-info pb-8 pt-5 pt-md-8"></div>
@@ -13,7 +91,9 @@ const Users = () => {
           <Card className="shadow">
                 <CardHeader className="border-0 d-flex align-items-center justify-content-between">
                 <h3 className="mb-0">Users</h3>
-                <button className="btn btn-primary">Add User</button>
+                <Button color="primary" onClick={toggleAddUserModal}>
+                  Add User
+                </Button>
                 </CardHeader>
             <Table className="align-items-center table-flush" responsive>
               <thead className="thead-light">
@@ -28,7 +108,8 @@ const Users = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                {users.map((user) => (
+                  <tr key={user.id}>
                   <th scope="row">
                     <Media className="align-items-center">
                       <a
@@ -38,26 +119,26 @@ const Users = () => {
                       >
                         <img
                           alt="..."
-                          src={require("../../assets/img/theme/team-1-800x800.jpg")}
+                            src={user.avatar}
                         />
                       </a>
                       <Media>
                         <span className="mb-0 text-sm">
-                          John Smith
+                            {user.name}
                         </span>
                       </Media>
                     </Media>
                   </th>
-                  <td>john.smith@email.com</td>
-                  <td>+1 (555) 123-4567</td>
-                  <td>Harvard University</td>
-                  <td>
-                    <Badge color="success" className="badge-dot mr-4">
-                      <i className="bg-success" />
-                      150 Credits
+                    <td>{user.email}</td>
+                    <td>{user.phoneNumber}</td>
+                    <td>{user.schoolName}</td>
+                    <td>
+                      <Badge color={getCreditsBadgeColor(user.credits)} className="badge-dot mr-4">
+                        <i className={`bg-${getCreditsBadgeColor(user.credits)}`} />
+                        {user.credits} Credits
                     </Badge>
                   </td>
-                  <td>USR001</td>
+                    <td>{user.uid}</td>
                   <td className="text-right">
                     <UncontrolledDropdown>
                       <DropdownToggle
@@ -93,266 +174,7 @@ const Users = () => {
                     </UncontrolledDropdown>
                   </td>
                 </tr>
-                <tr>
-                  <th scope="row">
-                    <Media className="align-items-center">
-                      <a
-                        className="avatar rounded-circle mr-3"
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <img
-                          alt="..."
-                          src={require("../../assets/img/theme/team-2-800x800.jpg")}
-                        />
-                      </a>
-                      <Media>
-                        <span className="mb-0 text-sm">
-                          Sarah Johnson
-                        </span>
-                      </Media>
-                    </Media>
-                  </th>
-                  <td>sarah.johnson@email.com</td>
-                  <td>+1 (555) 234-5678</td>
-                  <td>Stanford University</td>
-                  <td>
-                    <Badge color="warning" className="badge-dot mr-4">
-                      <i className="bg-warning" />
-                      75 Credits
-                    </Badge>
-                  </td>
-                  <td>USR002</td>
-                  <td className="text-right">
-                    <UncontrolledDropdown>
-                      <DropdownToggle
-                        className="btn-icon-only text-light"
-                        href="#pablo"
-                        role="button"
-                        size="sm"
-                        color=""
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fas fa-ellipsis-v" />
-                      </DropdownToggle>
-                      <DropdownMenu className="dropdown-menu-arrow" right>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Edit User
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          View Profile
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Delete User
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </UncontrolledDropdown>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">
-                    <Media className="align-items-center">
-                      <a
-                        className="avatar rounded-circle mr-3"
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <img
-                          alt="..."
-                          src={require("../../assets/img/theme/team-3-800x800.jpg")}
-                        />
-                      </a>
-                      <Media>
-                        <span className="mb-0 text-sm">
-                          Michael Brown
-                        </span>
-                      </Media>
-                    </Media>
-                  </th>
-                  <td>michael.brown@email.com</td>
-                  <td>+1 (555) 345-6789</td>
-                  <td>MIT</td>
-                  <td>
-                    <Badge color="info" className="badge-dot mr-4">
-                      <i className="bg-info" />
-                      200 Credits
-                    </Badge>
-                  </td>
-                  <td>USR003</td>
-                  <td className="text-right">
-                    <UncontrolledDropdown>
-                      <DropdownToggle
-                        className="btn-icon-only text-light"
-                        href="#pablo"
-                        role="button"
-                        size="sm"
-                        color=""
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fas fa-ellipsis-v" />
-                      </DropdownToggle>
-                      <DropdownMenu className="dropdown-menu-arrow" right>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Edit User
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          View Profile
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Delete User
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </UncontrolledDropdown>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">
-                    <Media className="align-items-center">
-                      <a
-                        className="avatar rounded-circle mr-3"
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <img
-                          alt="..."
-                          src={require("../../assets/img/theme/team-4-800x800.jpg")}
-                        />
-                      </a>
-                      <Media>
-                        <span className="mb-0 text-sm">
-                          Emily Davis
-                        </span>
-                      </Media>
-                    </Media>
-                  </th>
-                  <td>emily.davis@email.com</td>
-                  <td>+1 (555) 456-7890</td>
-                  <td>Yale University</td>
-                  <td>
-                    <Badge color="danger" className="badge-dot mr-4">
-                      <i className="bg-danger" />
-                      25 Credits
-                    </Badge>
-                  </td>
-                  <td>USR004</td>
-                  <td className="text-right">
-                    <UncontrolledDropdown>
-                      <DropdownToggle
-                        className="btn-icon-only text-light"
-                        href="#pablo"
-                        role="button"
-                        size="sm"
-                        color=""
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fas fa-ellipsis-v" />
-                      </DropdownToggle>
-                      <DropdownMenu className="dropdown-menu-arrow" right>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Edit User
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          View Profile
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Delete User
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </UncontrolledDropdown>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">
-                    <Media className="align-items-center">
-                      <a
-                        className="avatar rounded-circle mr-3"
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <img
-                          alt="..."
-                          src={require("../../assets/img/theme/team-1-800x800.jpg")}
-                        />
-                      </a>
-                      <Media>
-                        <span className="mb-0 text-sm">
-                          David Wilson
-                        </span>
-                      </Media>
-                    </Media>
-                  </th>
-                  <td>david.wilson@email.com</td>
-                  <td>+1 (555) 567-8901</td>
-                  <td>Princeton University</td>
-                  <td>
-                    <Badge color="success" className="badge-dot mr-4">
-                      <i className="bg-success" />
-                      300 Credits
-                    </Badge>
-                  </td>
-                  <td>USR005</td>
-                  <td className="text-right">
-                    <UncontrolledDropdown>
-                      <DropdownToggle
-                        className="btn-icon-only text-light"
-                        href="#pablo"
-                        role="button"
-                        size="sm"
-                        color=""
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fas fa-ellipsis-v" />
-                      </DropdownToggle>
-                      <DropdownMenu className="dropdown-menu-arrow" right>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Edit User
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          View Profile
-                        </DropdownItem>
-                        <DropdownItem
-                          href="#pablo"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          Delete User
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </UncontrolledDropdown>
-                  </td>
-                </tr>
+                ))}
               </tbody>
             </Table>
             <CardFooter className="py-4">
@@ -411,6 +233,13 @@ const Users = () => {
         </div>
       </Row>
     </Container>
+    
+    {/* Add User Modal */}
+    <AddUserModal 
+      isOpen={isAddUserModalOpen}
+      toggle={toggleAddUserModal}
+      onAddUser={handleAddUser}
+    />
   </>
   )
 }

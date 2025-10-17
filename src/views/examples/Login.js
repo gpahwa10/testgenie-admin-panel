@@ -20,7 +20,6 @@
 import {
   Button,
   Card,
-  CardHeader,
   CardBody,
   FormGroup,
   Form,
@@ -28,13 +27,32 @@ import {
   InputGroupAddon,
   InputGroupText,
   InputGroup,
-  Row,
   Col,
 } from "reactstrap";
 import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+
 const Login = () => {
+  const [email,setEmail] = useState('');
+  const [password,setPassword] = useState('');
   const navigate = useNavigate();
-  const handleLogin = () => {
+  
+  const handleLogin = async(e) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!email || !password) {
+      alert('Please fill in all fields');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+    
+    // Simple login - just navigate to admin dashboard
+    console.log('Login attempt:', { email, passwordLength: password.length });
     navigate('/admin/index');
   }
 
@@ -43,7 +61,6 @@ const Login = () => {
       <Col lg="5" md="7">
         <Card className="bg-secondary shadow border-0">
           <CardBody className="px-lg-5 py-lg-5">
-          
             <Form role="form">
               <FormGroup className="mb-3">
                 <InputGroup className="input-group-alternative">
@@ -56,6 +73,8 @@ const Login = () => {
                     placeholder="Email"
                     type="email"
                     autoComplete="new-email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </InputGroup>
               </FormGroup>
@@ -70,6 +89,8 @@ const Login = () => {
                     placeholder="Password"
                     type="password"
                     autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </InputGroup>
               </FormGroup>
@@ -87,7 +108,12 @@ const Login = () => {
                 </label>
               </div>
               <div  className="text-center">
-                <Button onClick={handleLogin} className="my-4" color="primary" type="button">
+                <Button 
+                  onClick={handleLogin} 
+                  className="my-4" 
+                  color="primary" 
+                  type="button"
+                >
                   Sign in
                 </Button>
               </div>
