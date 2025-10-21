@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Modal,
   ModalHeader,
@@ -11,105 +11,103 @@ import {
   Input,
   Row,
   Col,
-  Alert
-} from 'reactstrap';
+  Alert,
+} from "reactstrap";
 
 const AddUserModal = ({ isOpen, toggle, onAddUser }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phoneNumber: '',
-    schoolName: '',
-    credits: 5,
-    uid: ''
+    name: "",
+    email: "",
+    phone: "",
+    school: "",
+    credit: 5,
+    uid: "",
+    image: null, // optional
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = "Name is required";
     }
-    
+
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
-    
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
     }
-    
-    if (!formData.schoolName.trim()) {
-      newErrors.schoolName = 'School name is required';
+
+    if (!formData.school.trim()) {
+      newErrors.school = "School name is required";
     }
-    
-    if (!formData.uid.trim()) {
-      newErrors.uid = 'UID is required';
+
+    if (formData.credit < 0) {
+      newErrors.credit = "credit cannot be negative";
     }
-    
-    if (formData.credits < 0) {
-      newErrors.credits = 'Credits cannot be negative';
-    }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
-    try {
-      // Generate a unique UID if not provided
-      const userData = {
-        ...formData,
-        uid: formData.uid || `USR${Date.now().toString().slice(-6)}`,
-        credits: parseInt(formData.credits) || 0
-      };
-      
+
+      try {
+        const { uid, ...userDataWithoutUid } = formData;
+        const userData = {
+          ...userDataWithoutUid,
+          credit: parseInt(formData.credit) || 0,
+        };
+
+        console.log("Form data before submit:", formData);
+        console.log("User data before submit (without uid):", userData);
+
       // Call the parent component's add user function
       await onAddUser(userData);
-      
+
       // Reset form and close modal
       setFormData({
-        name: '',
-        email: '',
-        phoneNumber: '',
-        schoolName: '',
-        credits: 0,
-        uid: ''
+        name: "",
+        email: "",
+        phone: "",
+        school: "",
+        credit: 5,
+        uid: "",
       });
       setErrors({});
       toggle();
-      
     } catch (error) {
-      console.error('Error adding user:', error);
-      setErrors({ submit: 'Failed to add user. Please try again.' });
+      console.error("Error adding user:", error);
+      setErrors({ submit: "Failed to add user. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -117,12 +115,13 @@ const AddUserModal = ({ isOpen, toggle, onAddUser }) => {
 
   const handleClose = () => {
     setFormData({
-      name: '',
-      email: '',
-      phoneNumber: '',
-      schoolName: '',
-      credits: 0,
-      uid: ''
+      name: "",
+      email: "",
+      phone: "",
+      school: "",
+      credit: 0,
+      uid: "",
+      image: null,
     });
     setErrors({});
     toggle();
@@ -130,17 +129,11 @@ const AddUserModal = ({ isOpen, toggle, onAddUser }) => {
 
   return (
     <Modal isOpen={isOpen} toggle={handleClose} size="lg">
-      <ModalHeader toggle={handleClose}>
-        Add New User
-      </ModalHeader>
+      <ModalHeader toggle={handleClose}>Add New User</ModalHeader>
       <Form onSubmit={handleSubmit}>
         <ModalBody>
-          {errors.submit && (
-            <Alert color="danger">
-              {errors.submit}
-            </Alert>
-          )}
-          
+          {errors.submit && <Alert color="danger">{errors.submit}</Alert>}
+
           <Row>
             <Col md="6">
               <FormGroup>
@@ -154,9 +147,7 @@ const AddUserModal = ({ isOpen, toggle, onAddUser }) => {
                   invalid={!!errors.name}
                 />
                 {errors.name && (
-                  <div className="invalid-feedback d-block">
-                    {errors.name}
-                  </div>
+                  <div className="invalid-feedback d-block">{errors.name}</div>
                 )}
               </FormGroup>
             </Col>
@@ -172,84 +163,85 @@ const AddUserModal = ({ isOpen, toggle, onAddUser }) => {
                   invalid={!!errors.email}
                 />
                 {errors.email && (
-                  <div className="invalid-feedback d-block">
-                    {errors.email}
-                  </div>
+                  <div className="invalid-feedback d-block">{errors.email}</div>
                 )}
               </FormGroup>
             </Col>
           </Row>
-          
+
           <Row>
             <Col md="6">
               <FormGroup>
-                <Label for="phoneNumber">Phone Number *</Label>
+                <Label for="phone">Phone Number *</Label>
                 <Input
                   type="tel"
-                  name="phoneNumber"
-                  id="phoneNumber"
-                  value={formData.phoneNumber}
+                  name="phone"
+                  id="phone"
+                  value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="+1 (555) 123-4567"
-                  invalid={!!errors.phoneNumber}
+                  invalid={!!errors.phone}
                 />
-                {errors.phoneNumber && (
+                {errors.phone && (
                   <div className="invalid-feedback d-block">
-                    {errors.phoneNumber}
+                    {errors.phone}
                   </div>
                 )}
               </FormGroup>
             </Col>
             <Col md="6">
               <FormGroup>
-                <Label for="schoolName">School Name *</Label>
+                <Label for="school">School Name *</Label>
                 <Input
                   type="text"
-                  name="schoolName"
-                  id="schoolName"
-                  value={formData.schoolName}
+                  name="school"
+                  id="school"
+                  value={formData.school}
                   onChange={handleInputChange}
-                  invalid={!!errors.schoolName}
+                  invalid={!!errors.school}
                 />
-                {errors.schoolName && (
+                {errors.school && (
                   <div className="invalid-feedback d-block">
-                    {errors.schoolName}
+                    {errors.school}
                   </div>
                 )}
               </FormGroup>
             </Col>
           </Row>
-          
+
           <Row>
-        
             <Col md="6">
               <FormGroup>
-                <Label for="credits">Initial Credits</Label>
+                <Label for="credit">Initial credit</Label>
                 <Input
                   type="number"
-                  name="credits"
-                  id="credits"
-                  value={formData.credits}
+                  name="credit"
+                  id="credit"
+                  value={formData.credit}
                   onChange={handleInputChange}
                   min="0"
-                  invalid={!!errors.credits}
+                  invalid={!!errors.credit}
                 />
-                {errors.credits && (
+                {errors.credit && (
                   <div className="invalid-feedback d-block">
-                    {errors.credits}
+                    {errors.credit}
                   </div>
                 )}
               </FormGroup>
             </Col>
           </Row>
         </ModalBody>
-        
+
         <ModalFooter>
-          <Button color="secondary" onClick={handleClose} disabled={isSubmitting}>
+          <Button
+            color="secondary"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button color="primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add User'}
+            {isSubmitting ? "Adding..." : "Add User"}
           </Button>
         </ModalFooter>
       </Form>

@@ -1,77 +1,71 @@
-import React, { useState } from 'react'
-import { Media, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle, Pagination, PaginationItem, PaginationLink, Table, Container, Row, Button } from 'reactstrap'
+import React, { useState, useEffect } from 'react'
+import { Media, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle,  Table, Container, Row, Button, Spinner, Alert } from 'reactstrap'
 import AddUserModal from 'components/modals/AddUserModal'
+import { usersService } from '../../services/usersService'
 
 const Users = () => {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@email.com',
-      phoneNumber: '+1 (555) 123-4567',
-      schoolName: 'Harvard University',
-      credits: 150,
-      uid: 'USR001',
-      avatar: require("../../assets/img/theme/team-1-800x800.jpg")
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      phoneNumber: '+1 (555) 234-5678',
-      schoolName: 'Stanford University',
-      credits: 75,
-      uid: 'USR002',
-      avatar: require("../../assets/img/theme/team-2-800x800.jpg")
-    },
-    {
-      id: 3,
-      name: 'Michael Brown',
-      email: 'michael.brown@email.com',
-      phoneNumber: '+1 (555) 345-6789',
-      schoolName: 'MIT',
-      credits: 200,
-      uid: 'USR003',
-      avatar: require("../../assets/img/theme/team-3-800x800.jpg")
-    },
-    {
-      id: 4,
-      name: 'Emily Davis',
-      email: 'emily.davis@email.com',
-      phoneNumber: '+1 (555) 456-7890',
-      schoolName: 'Yale University',
-      credits: 25,
-      uid: 'USR004',
-      avatar: require("../../assets/img/theme/team-4-800x800.jpg")
-    },
-    {
-      id: 5,
-      name: 'David Wilson',
-      email: 'david.wilson@email.com',
-      phoneNumber: '+1 (555) 567-8901',
-      schoolName: 'Princeton University',
-      credits: 300,
-      uid: 'USR005',
-      avatar: require("../../assets/img/theme/team-1-800x800.jpg")
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async (pageSize = 10, lastDocId = null, isNextPage = false) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const data = await usersService.fetchUsers(pageSize, lastDocId);
+      setUsers(prev =>
+        isNextPage ? [...prev, ...data.users] : data.users
+      );
+      setLastVisible(data.lastVisible);
+      setHasMore(data.users.length === pageSize);
+    } catch (err) {
+      setError('Failed to fetch users. Please try again.');
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  const refreshUsers = () => {
+    fetchUsers();
+  };
 
   const toggleAddUserModal = () => {
     setIsAddUserModalOpen(!isAddUserModalOpen);
   };
 
-  const handleAddUser = (newUserData) => {
-    const newUser = {
-      id: users.length + 1,
-      ...newUserData,
-      avatar: require("../../assets/img/theme/team-1-800x800.jpg") // Default avatar
-    };
-    
-    setUsers(prevUsers => [...prevUsers, newUser]);
-    
-    // Here you would typically make an API call to save the user
-    console.log('New user added:', newUser);
+  const handleAddUser = async (newUserData) => {
+    try {
+      const newUser = await usersService.addUser(newUserData);
+      setUsers(prevUsers => [newUser, ...prevUsers]);
+      setIsAddUserModalOpen(false); // Close modal after successful add
+      console.log('New user added:', newUser);
+    } catch (err) {
+      console.error('Error adding user:', err);
+      setError('Failed to add user. Please try again.');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await usersService.deleteUser(userId);
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        console.log('User deleted successfully');
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        setError('Failed to delete user. Please try again.');
+      }
+    }
   };
 
   const getCreditsBadgeColor = (credits) => {
@@ -85,15 +79,31 @@ const Users = () => {
     <div className="header bg-gradient-info pb-8 pt-5 pt-md-8"></div>
     {/* Page content */}
     <Container className="mt--7 mb-5" fluid>
+      {/* Error Alert */}
+      {error && (
+        <Row>
+          <div className="col">
+            <Alert color="danger" className="mb-4">
+              {error}
+            </Alert>
+          </div>
+        </Row>
+      )}
+      
       {/* Table */}
       <Row>
         <div className="col">
           <Card className="shadow">
                 <CardHeader className="border-0 d-flex align-items-center justify-content-between">
                 <h3 className="mb-0">Users</h3>
-                <Button color="primary" onClick={toggleAddUserModal}>
-                  Add User
-                </Button>
+                <div className="d-flex gap-2">
+                  <Button color="secondary" onClick={refreshUsers} disabled={loading}>
+                    {loading ? <Spinner size="sm" /> : 'Refresh'}
+                  </Button>
+                  <Button color="primary" onClick={toggleAddUserModal}>
+                    Add User
+                  </Button>
+                </div>
                 </CardHeader>
             <Table className="align-items-center table-flush" responsive>
               <thead className="thead-light">
@@ -104,41 +114,54 @@ const Users = () => {
                   <th scope="col">School Name</th>
                   <th scope="col">Credits</th>
                   <th scope="col">UID</th>
-                  {/* <th scope="col" /> */}
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                  <th scope="row">
-                    <Media className="align-items-center">
-                      <a
-                        className="avatar rounded-circle mr-3"
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <img
-                          alt="..."
-                            src={user.avatar}
-                        />
-                      </a>
-                      <Media>
-                        <span className="mb-0 text-sm">
-                            {user.name}
-                        </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-4">
+                      <Spinner color="primary" />
+                      <span className="ml-2">Loading users...</span>
+                    </td>
+                  </tr>
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-4">
+                      No users found
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id}>
+                    <th scope="row">
+                      <Media className="align-items-center">
+                        <a
+                          className="avatar rounded-circle mr-3"
+                          href="#pablo"
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          <img
+                            alt="..."
+                            src={user.image || require("../../assets/img/theme/team-1-800x800.jpg")}
+                          />
+                        </a>
+                        <Media>
+                          <span className="mb-0 text-sm">
+                              {user.name || user.displayName || 'N/A'}
+                          </span>
+                        </Media>
                       </Media>
-                    </Media>
-                  </th>
-                    <td>{user.email}</td>
-                    <td>{user.phoneNumber}</td>
-                    <td>{user.schoolName}</td>
-                    <td>
-                      <Badge color={getCreditsBadgeColor(user.credits)} className="badge-dot mr-4">
-                        <i className={`bg-${getCreditsBadgeColor(user.credits)}`} />
-                        {user.credits} Credits
-                    </Badge>
-                  </td>
-                    <td>{user.uid}</td>
+                    </th>
+                      <td>{user.email || 'N/A'}</td>
+                      <td>{user.phoneNumber || user.phone || 'N/A'}</td>
+                      <td>{user.schoolName || user.school || 'N/A'}</td>
+                      <td>
+                        <Badge color={getCreditsBadgeColor(user.credit || 0)} className="badge-dot mr-4">
+                          <i className={`bg-${getCreditsBadgeColor(user.credit || 0)}`} />
+                          {user.credit || 0} Credits
+                      </Badge>
+                    </td>
+                      <td>{user.uid || user.id}</td>
                   <td className="text-right">
                     <UncontrolledDropdown>
                       <DropdownToggle
@@ -166,18 +189,21 @@ const Users = () => {
                         </DropdownItem>
                         <DropdownItem
                           href="#pablo"
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDeleteUser(user.id);
+                          }}
                         >
                           Delete User
                         </DropdownItem>
                       </DropdownMenu>
                     </UncontrolledDropdown>
                   </td>
-                </tr>
-                ))}
-              </tbody>
+                  </tr>
+                 )))}
+                </tbody>
             </Table>
-            <CardFooter className="py-4">
+            {/* <CardFooter className="py-4">
               <nav aria-label="...">
                 <Pagination
                   className="pagination justify-content-end mb-0"
@@ -228,7 +254,21 @@ const Users = () => {
                   </PaginationItem>
                 </Pagination>
               </nav>
-            </CardFooter>
+            </CardFooter> */}
+            <CardFooter className="py-4 text-center">
+  {hasMore ? (
+    <Button
+      color="primary"
+      onClick={() => fetchUsers(10, lastVisible, true)}
+      disabled={loading}
+    >
+      {loading ? <Spinner size="sm" /> : "Load More"}
+    </Button>
+  ) : (
+    <p className="text-muted mb-0">No more users</p>
+  )}
+</CardFooter>
+
           </Card>
         </div>
       </Row>
