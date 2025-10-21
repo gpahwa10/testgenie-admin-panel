@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { Media, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle,  Table, Container, Row, Button, Spinner, Alert } from 'reactstrap'
 import AddUserModal from 'components/modals/AddUserModal'
 import { usersService } from '../../services/usersService'
-
+import { useNavigate } from 'react-router-dom'; 
 const Users = () => {
+  const navigate = useNavigate();
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,17 @@ const Users = () => {
         console.error('Error deleting user:', err);
         setError('Failed to delete user. Please try again.');
       }
+    }
+  };
+
+  const handleViewUser = async (userId) => {
+    try {
+      const user = await usersService.getUserById(userId);
+      console.log('User:', user);
+      navigate(`/admin/users/${userId}`);
+    } catch (err) {
+      console.error('Error getting user:', err);
+      setError('Failed to get user. Please try again.');
     }
   };
 
@@ -183,7 +195,9 @@ const Users = () => {
                         </DropdownItem>
                         <DropdownItem
                           href="#pablo"
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => {e.preventDefault();
+                            handleViewUser(user.id);
+                          }}
                         >
                           View Profile
                         </DropdownItem>

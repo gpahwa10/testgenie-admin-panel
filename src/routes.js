@@ -26,6 +26,7 @@ import Users from "views/users";
 import BoardsClasses from "views/boards";
 import Books from "views/books";
 import UserProfile from "views/profile";
+import UserDetails from "views/users/[id]";
 
 var routes = [
   {
@@ -49,6 +50,14 @@ var routes = [
     icon: "ni ni-planet text-blue",
     component: <Users />,
     layout: "/admin",
+  },
+  {
+    path: "/users/:id",
+    name: "User Details",
+    icon: "ni ni-planet text-blue",
+    component: <UserDetails />,
+    layout: "/admin",
+    showInSidebar:false
   },
   {
     path: "/boards_classes",
