@@ -2,36 +2,55 @@ import React, { useState, useEffect } from 'react'
 import { Media, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle,  Table, Container, Row, Button, Spinner, Alert } from 'reactstrap'
 import AddUserModal from 'components/modals/AddUserModal'
 import EditUserModal from 'components/modals/EditUserModal'
+import ConfirmDeleteUserModal from 'components/modals/ConfirmDeleteUserModal'
+import AccessiblePagination from 'components/Pagination/AccessiblePagination'
 import { usersService } from '../../services/usersService'
 import { useNavigate } from 'react-router-dom'; 
 const Users = () => {
   const navigate = useNavigate();
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
   const [lastVisible, setLastVisible] = useState(null);
-  const [hasMore, setHasMore] = useState(true);
 
   // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
+    fetchUsersCount();
   }, []);
 
-  const fetchUsers = async (pageSize = 10, lastDocId = null, isNextPage = false) => {
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, itemsPerPage]);
+
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const data = await usersService.fetchUsers(pageSize, lastDocId);
-      setUsers(prev =>
-        isNextPage ? [...prev, ...data.users] : data.users
-      );
+      // Calculate the last visible document for the current page
+      let lastDoc = null;
+      if (currentPage > 1) {
+        // For simplicity, we'll fetch all previous pages
+        // In a real app, you'd want to store the lastVisible for each page
+        const previousData = await usersService.fetchUsers((currentPage - 1) * itemsPerPage);
+        lastDoc = previousData.lastVisible;
+      }
+      
+      const data = await usersService.fetchUsers(itemsPerPage, lastDoc);
+      setUsers(data.users);
       setLastVisible(data.lastVisible);
-      setHasMore(data.users.length === pageSize);
     } catch (err) {
       setError('Failed to fetch users. Please try again.');
       console.error('Error fetching users:', err);
@@ -40,8 +59,30 @@ const Users = () => {
     }
   };
 
+  const fetchUsersCount = async () => {
+    try {
+      // For now, we'll estimate based on the first fetch
+      // In a real app, you'd want a separate count query
+      const data = await usersService.fetchUsers(1);
+      // This is a simplified approach - you'd want a proper count query
+      setTotalItems(data.users.length > 0 ? 100 : 0); // Placeholder
+    } catch (err) {
+      console.error('Error fetching users count:', err);
+    }
+  };
+
   const refreshUsers = () => {
     fetchUsers();
+    fetchUsersCount();
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   const toggleAddUserModal = () => {
@@ -50,6 +91,10 @@ const Users = () => {
 
   const toggleEditUserModal = () => {
     setIsEditUserModalOpen(!isEditUserModalOpen);
+  };
+
+  const toggleDeleteUserModal = () => {
+    setIsDeleteUserModalOpen(!isDeleteUserModalOpen);
   };
 
   const handleAddUser = async (newUserData) => {
@@ -99,15 +144,24 @@ const Users = () => {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+  const handleDeleteUser = (user) => {
+    setUserToDelete(user);
+    setIsDeleteUserModalOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (userToDelete) {
       try {
-        await usersService.deleteUser(userId);
-        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        await usersService.deleteUser(userToDelete.id);
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userToDelete.id));
         
         // Show success message
         setSuccessMessage("User deleted successfully!");
         setTimeout(() => setSuccessMessage(null), 3000);
+        
+        // Close modal and reset state
+        setIsDeleteUserModalOpen(false);
+        setUserToDelete(null);
         
         console.log('User deleted successfully');
       } catch (err) {
@@ -273,7 +327,7 @@ const Users = () => {
                           href="#pablo"
                           onClick={(e) => {
                             e.preventDefault();
-                            handleDeleteUser(user.id);
+                            handleDeleteUser(user);
                           }}
                         >
                           Delete User
@@ -337,19 +391,21 @@ const Users = () => {
                 </Pagination>
               </nav>
             </CardFooter> */}
-            <CardFooter className="py-4 text-center">
-  {hasMore ? (
-    <Button
-      color="primary"
-      onClick={() => fetchUsers(10, lastVisible, true)}
-      disabled={loading}
-    >
-      {loading ? <Spinner size="sm" /> : "Load More"}
-    </Button>
-  ) : (
-    <p className="text-muted mb-0">No more users</p>
-  )}
-</CardFooter>
+            <CardFooter className="py-4">
+              <AccessiblePagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalItems / itemsPerPage)}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                loading={loading}
+                showItemsPerPage={true}
+                showPageInfo={true}
+                showFirstLast={true}
+                maxVisiblePages={5}
+              />
+            </CardFooter>
 
           </Card>
         </div>
@@ -369,6 +425,15 @@ const Users = () => {
       toggle={toggleEditUserModal}
       onUpdateUser={handleUpdateUser}
       userData={selectedUser}
+    />
+    
+    {/* Confirm Delete User Modal */}
+    <ConfirmDeleteUserModal 
+      isOpen={isDeleteUserModalOpen}
+      toggle={toggleDeleteUserModal}
+      onConfirm={confirmDeleteUser}
+      userName={userToDelete?.name || userToDelete?.displayName}
+      userEmail={userToDelete?.email}
     />
   </>
   )

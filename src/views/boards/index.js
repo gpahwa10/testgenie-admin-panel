@@ -5,9 +5,6 @@ import {
   Card,
   CardHeader,
   CardFooter,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
   Table,
   Container,
   Row,
@@ -19,6 +16,7 @@ import Switch from "react-switch";
 import AddBoardsModal from "components/modals/AddBoardsModal";
 import EditBoardsModal from "components/modals/EditBoardsModal";
 import ConfirmDeleteModal from "components/modals/ConfirmDeleteModal";
+import AccessiblePagination from "components/Pagination/AccessiblePagination";
 import { boardServices } from "services/boardServices";
 const BoardsClasses = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,22 +28,53 @@ const BoardsClasses = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [lastVisible, setLastVisible] = useState(null);
 
   useEffect(() => {
     fetchBoards();
+    fetchBoardsCount();
   }, []);
+
+  useEffect(() => {
+    fetchBoards();
+  }, [currentPage, itemsPerPage]);
 
   const fetchBoards = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await boardServices.fetchBoards();
+      
+      // Calculate the last visible document for the current page
+      let lastDoc = null;
+      if (currentPage > 1) {
+        // For simplicity, we'll fetch all previous pages
+        // In a real app, you'd want to store the lastVisible for each page
+        const previousData = await boardServices.fetchBoards((currentPage - 1) * itemsPerPage);
+        lastDoc = previousData.lastVisible;
+      }
+      
+      const data = await boardServices.fetchBoards(itemsPerPage, lastDoc);
       setBoards(data.boards);
+      setLastVisible(data.lastVisible);
     } catch (error) {
       console.error("Error fetching boards:", error);
       setError("Failed to fetch boards. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBoardsCount = async () => {
+    try {
+      const count = await boardServices.getBoardsCount();
+      setTotalItems(count);
+    } catch (error) {
+      console.error("Error fetching boards count:", error);
     }
   };
 
@@ -67,8 +96,9 @@ const BoardsClasses = () => {
       const response = await boardServices.addBoard(boardData);
       console.log("Board added successfully:", response);
       
-      // Refresh the boards list to show the new board
+      // Refresh the boards list and count
       await fetchBoards();
+      await fetchBoardsCount();
       
       // Show success message
       setSuccessMessage("Board added successfully!");
@@ -79,6 +109,15 @@ const BoardsClasses = () => {
       console.error("Error adding board:", error);
       throw error;
     }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   const handleEditBoard = (board) => {
@@ -297,56 +336,19 @@ const BoardsClasses = () => {
                 </tbody>
               </Table>
               <CardFooter className="py-4">
-                <nav aria-label="...">
-                  <Pagination
-                    className="pagination justify-content-end mb-0"
-                    listClassName="justify-content-end mb-0"
-                  >
-                    <PaginationItem className="disabled">
-                      <PaginationLink
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                        tabIndex="-1"
-                      >
-                        <i className="fas fa-angle-left" />
-                        <span className="sr-only">Previous</span>
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem className="active">
-                      <PaginationLink
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        2 <span className="sr-only">(current)</span>
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        3
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#pablo"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fas fa-angle-right" />
-                        <span className="sr-only">Next</span>
-                      </PaginationLink>
-                    </PaginationItem>
-                  </Pagination>
-                </nav>
+                <AccessiblePagination
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(totalItems / itemsPerPage)}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  loading={loading}
+                  showItemsPerPage={true}
+                  showPageInfo={true}
+                  showFirstLast={true}
+                  maxVisiblePages={5}
+                />
               </CardFooter>
             </Card>
           </div>

@@ -1,21 +1,52 @@
 import { db } from "../lib/firebase";
-import { collection, getDocs, query, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, query, doc, updateDoc, addDoc, deleteDoc, orderBy, limit, startAfter, getCountFromServer } from "firebase/firestore";
 export const boardServices = {
-  async fetchBoards() {
+  async fetchBoards(pageSize = 10, lastVisible = null) {
     try {
         const boardsRef = collection(db, "boards");
         let q;
-        q = query(boardsRef);
+        
+        if (lastVisible) {
+          q = query(
+            boardsRef,
+            orderBy("board"), // sort by board name
+            startAfter(lastVisible),
+            limit(pageSize)
+          );
+        } else {
+          q = query(
+            boardsRef,
+            orderBy("board"),
+            limit(pageSize)
+          );
+        }
+        
         const snapshot = await getDocs(q);
         const boards = snapshot.docs.map((doc)=>({
             id: doc.id,
             ...doc.data()
-        }))
+        }));
+        
+        // Store the last doc for pagination
+        const lastDoc = snapshot.docs.length > 0
+          ? snapshot.docs[snapshot.docs.length - 1]
+          : null;
+        
         console.log(`Fetched ${boards.length} board(s) from Firebase`);
-        console.log(boards);
-        return {boards};
+        return {boards, lastVisible: lastDoc};
     } catch (error) {
       console.error("Error fetching boards:", error);
+      throw error;
+    }
+  },
+
+  async getBoardsCount() {
+    try {
+      const boardsRef = collection(db, "boards");
+      const snapshot = await getCountFromServer(boardsRef);
+      return snapshot.data().count;
+    } catch (error) {
+      console.error("Error getting boards count:", error);
       throw error;
     }
   },
