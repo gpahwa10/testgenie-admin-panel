@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { Media, Badge, Card, CardHeader, CardFooter, DropdownMenu, DropdownItem, UncontrolledDropdown, DropdownToggle,  Table, Container, Row, Button, Spinner, Alert } from 'reactstrap'
 import AddUserModal from 'components/modals/AddUserModal'
+import EditUserModal from 'components/modals/EditUserModal'
 import { usersService } from '../../services/usersService'
 import { useNavigate } from 'react-router-dom'; 
 const Users = () => {
   const navigate = useNavigate();
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -44,15 +48,54 @@ const Users = () => {
     setIsAddUserModalOpen(!isAddUserModalOpen);
   };
 
+  const toggleEditUserModal = () => {
+    setIsEditUserModalOpen(!isEditUserModalOpen);
+  };
+
   const handleAddUser = async (newUserData) => {
     try {
       const newUser = await usersService.addUser(newUserData);
       setUsers(prevUsers => [newUser, ...prevUsers]);
       setIsAddUserModalOpen(false); // Close modal after successful add
+      
+      // Show success message
+      setSuccessMessage("User added successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
       console.log('New user added:', newUser);
     } catch (err) {
       console.error('Error adding user:', err);
       setError('Failed to add user. Please try again.');
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setIsEditUserModalOpen(true);
+  };
+
+  const handleUpdateUser = async (userId, userData) => {
+    try {
+      const updatedUser = await usersService.updateUser(userId, userData);
+      
+      // Update the user in the local state
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId ? { ...user, ...userData } : user
+        )
+      );
+      
+      // Close modal
+      setIsEditUserModalOpen(false);
+      
+      // Show success message
+      setSuccessMessage("User updated successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+      console.log('User updated:', updatedUser);
+    } catch (err) {
+      console.error('Error updating user:', err);
+      setError('Failed to update user. Please try again.');
     }
   };
 
@@ -61,6 +104,11 @@ const Users = () => {
       try {
         await usersService.deleteUser(userId);
         setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        
+        // Show success message
+        setSuccessMessage("User deleted successfully!");
+        setTimeout(() => setSuccessMessage(null), 3000);
+        
         console.log('User deleted successfully');
       } catch (err) {
         console.error('Error deleting user:', err);
@@ -91,6 +139,23 @@ const Users = () => {
     <div className="header bg-gradient-info pb-8 pt-5 pt-md-8"></div>
     {/* Page content */}
     <Container className="mt--7 mb-5" fluid>
+      {/* Success Message */}
+      {successMessage && (
+        <Row className="mb-4">
+          <div className="col">
+            <Alert color="success" className="alert-dismissible fade show">
+              <i className="fas fa-check-circle me-2"></i>
+              {successMessage}
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setSuccessMessage(null)}
+              ></button>
+            </Alert>
+          </div>
+        </Row>
+      )}
+      
       {/* Error Alert */}
       {error && (
         <Row>
@@ -189,7 +254,10 @@ const Users = () => {
                       <DropdownMenu className="dropdown-menu-arrow" right>
                         <DropdownItem
                           href="#pablo"
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleEditUser(user);
+                          }}
                         >
                           Edit User
                         </DropdownItem>
@@ -293,6 +361,14 @@ const Users = () => {
       isOpen={isAddUserModalOpen}
       toggle={toggleAddUserModal}
       onAddUser={handleAddUser}
+    />
+    
+    {/* Edit User Modal */}
+    <EditUserModal 
+      isOpen={isEditUserModalOpen}
+      toggle={toggleEditUserModal}
+      onUpdateUser={handleUpdateUser}
+      userData={selectedUser}
     />
   </>
   )

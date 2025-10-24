@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   ModalHeader,
@@ -13,7 +13,7 @@ import {
   Alert
 } from 'reactstrap';
 
-const AddBoardsModal = ({ isOpen, toggle, onAddBoard }) => {
+const EditBoardsModal = ({ isOpen, toggle, onUpdateBoard, boardData }) => {
   const [formData, setFormData] = useState({
     board: "",
     classes: {}, // <-- stores { "1": { subject: [...] } }
@@ -36,6 +36,18 @@ const AddBoardsModal = ({ isOpen, toggle, onAddBoard }) => {
     { value: "11", label: "Class 11" },
     { value: "12", label: "Class 12" },
   ];
+
+  // Initialize form data when boardData changes
+  useEffect(() => {
+    if (boardData && isOpen) {
+      setFormData({
+        board: boardData.board || "",
+        classes: boardData.classes || {},
+        isActive: boardData.isActive !== undefined ? boardData.isActive : true
+      });
+      setErrors({});
+    }
+  }, [boardData, isOpen]);
 
   // Handle board name
   const handleInputChange = (e) => {
@@ -135,26 +147,23 @@ const AddBoardsModal = ({ isOpen, toggle, onAddBoard }) => {
       setErrors({});
       
       // Prepare data for API call
-      const boardData = {
+      const updateData = {
         board: formData.board.trim(),
         classes: formData.classes,
-        isActive: formData.isActive,
-        createdAt: new Date().toISOString()
+        isActive: formData.isActive
       };
       
-      console.log("Submitting board data:", boardData);
+      console.log("Updating board data:", updateData);
       
-      // Call the API to add board
-      await onAddBoard(boardData);
+      // Call the API to update board
+      await onUpdateBoard(boardData.id, updateData);
       
-      // Reset form and close modal on success
-      setFormData({ board: "", classes: {}, isActive: true });
-      setErrors({});
+      // Close modal on success
       toggle();
       
     } catch (error) {
-      console.error("Error adding board:", error);
-      setErrors({ submit: "Failed to add board. Please try again." });
+      console.error("Error updating board:", error);
+      setErrors({ submit: "Failed to update board. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -168,7 +177,7 @@ const AddBoardsModal = ({ isOpen, toggle, onAddBoard }) => {
 
   return (
     <Modal isOpen={isOpen} toggle={handleClose} size="lg">
-      <ModalHeader toggle={handleClose}>Add Board</ModalHeader>
+      <ModalHeader toggle={handleClose}>Edit Board</ModalHeader>
       <ModalBody>
         <Form>
           {errors.submit && <Alert color="danger">{errors.submit}</Alert>}
@@ -284,11 +293,11 @@ const AddBoardsModal = ({ isOpen, toggle, onAddBoard }) => {
           Cancel
         </Button>
         <Button color="primary" onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Adding..." : "Add Board"}
+          {isSubmitting ? "Updating..." : "Update Board"}
         </Button>
       </ModalFooter>
     </Modal>
   );
 };
 
-export default AddBoardsModal;
+export default EditBoardsModal;
